@@ -1,15 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { imageUpload } from "../../../api/Utils";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 const UpdateProperties = () => {
-  const axiosSecure = useAxiosSecure()
+  const axiosSecure = useAxiosSecure();
+  const [property, setProperty] = useState({});
+  const { id } = useParams();
 
-  const property = useLoaderData();
-  const navigate = useNavigate()
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        const { data } = await axiosSecure.get(
+          `${import.meta.env.VITE_URL}/property/${id}`
+        );
+        setProperty(data);
+      } catch (error) {
+        toast.error("Failed to fetch property details");
+      }
+    };
+    fetchProperty();
+  }, []);
+
+  console.log(property);
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -20,15 +36,13 @@ const UpdateProperties = () => {
     const maxRange = parseInt(form.maxRange.value);
     const newImageFile = form.image.files[0];
 
-   const priceRange = {
-    minRange,
-    maxRange
-   }
+    const priceRange = {
+      minRange,
+      maxRange,
+    };
 
-   
-    let updatedImageUrl = property.propertyImage; 
+    let updatedImageUrl = property.propertyImage;
 
-    
     if (newImageFile) {
       try {
         updatedImageUrl = await imageUpload(newImageFile);
@@ -39,16 +53,19 @@ const UpdateProperties = () => {
     }
 
     const updatedProperty = {
-        propertyImage: updatedImageUrl,
-        propertyTitle,
-        propertyLocation,
-        priceRange
-      };
-     
+      propertyImage: updatedImageUrl,
+      propertyTitle,
+      propertyLocation,
+      priceRange,
+    };
+
     try {
-      await axiosSecure.patch(`${import.meta.env.VITE_URL}/property/${property._id}`, updatedProperty);
+      await axiosSecure.patch(
+        `${import.meta.env.VITE_URL}/property/${property._id}`,
+        updatedProperty
+      );
       toast.success("Property updated successfully!");
-      navigate('/dashboard/my-added-properties')
+      navigate("/dashboard/my-added-properties");
     } catch (error) {
       toast.error("Failed to update property");
     }
@@ -115,7 +132,10 @@ const UpdateProperties = () => {
         </div>
 
         {/* Submit Button */}
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
           Update Property
         </button>
       </form>
